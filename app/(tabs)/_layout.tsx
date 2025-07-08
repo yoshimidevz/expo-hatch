@@ -9,6 +9,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import AuthGuard from '@/components/AuthGuard';
 
 // Componente personalizado para o ícone com barrinha
 const TabIconWithIndicator = ({ icon, focused, size = 24 }: { icon: React.ReactNode, focused: boolean, size?: number }) => {
@@ -68,7 +69,7 @@ export default function TabLayout() {
         },
       }}>
       <Tabs.Screen
-        name="index"
+        name="home"
         options={{
           title: 'Home',
           tabBarIcon: ({ color, focused }) => (

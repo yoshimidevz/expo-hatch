@@ -5,9 +5,6 @@ import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { Link } from 'expo-router';
 import Entypo from '@expo/vector-icons/Entypo';
 
-import { useEscotilhaStatus } from '@/hooks/useEscotilhaStatus';
-
-
 // Dados ajustados com menos fechamentos
 const alertsData = [
   { id: '1', message: 'ESCOTILHA ABRIU A COMPORTA', time: '18:25', date: '2023-05-15' },
@@ -17,11 +14,12 @@ const alertsData = [
 ].slice(0, 4); // Pegando apenas os 4 mais recentes
 
 const App = () => {
+  const [status, setStatus] = useState('ABERTO');
   const [connection, setConnection] = useState('CONECTADO');
 
-  const { status, toggleStatus } = useEscotilhaStatus();
-
-
+  const toggleStatus = () => {
+    setStatus(prevStatus => (prevStatus === 'ABERTO' ? 'FECHADO' : 'ABERTO')); 
+  };
 
   const toggleConnection = () => {
     setConnection(prevConn => (prevConn === 'CONECTADO' ? 'SEM CONEXÃO' : 'CONECTADO'));

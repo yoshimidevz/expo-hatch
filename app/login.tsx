@@ -1,4 +1,3 @@
-// src/screens/LoginScreen.tsx
 import React, { useState } from 'react';
 import {
   View,
@@ -8,46 +7,19 @@ import {
   StyleSheet,
   Alert,
   ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import authService, { LoginCredentials, ApiError } from '@/services/authService';
+import { Link, router } from 'expo-router';
+import authService, { LoginCredentials } from '@/services/authService';
 
-interface LoginScreenProps {
-  onLoginSuccess: () => void;
-}
-
-const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
+const LoginScreen: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
-
-  const validateFields = (): boolean => {
-    const newErrors: { email?: string; password?: string } = {};
-
-    if (!email.trim()) {
-      newErrors.email = 'Email é obrigatório';
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = 'Email inválido';
-    }
-
-    if (!password.trim()) {
-      newErrors.password = 'Senha é obrigatória';
-    } else if (password.length < 6) {
-      newErrors.password = 'Senha deve ter pelo menos 6 caracteres';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
 
   const handleLogin = async () => {
-    setErrors({});
-
-    if (!validateFields()) {
+    if (!email.trim() || !password.trim()) {
+      Alert.alert('Erro', 'Por favor, preencha todos os campos');
       return;
     }
 
@@ -61,31 +33,20 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
 
       const response = await authService.login(credentials);
 
-      if (response.success) {
+      // CORREÇÃO: Verificar response.status em vez de response.success
+      if (response.status === "success" || response.status_code === 200) {
         Alert.alert('Sucesso', 'Login realizado com sucesso!', [
           {
             text: 'OK',
-            onPress: onLoginSuccess,
+            onPress: () => {
+              // Redireciona para a tela home dentro das tabs
+              router.replace('/(tabs)/home');
+            },
           },
         ]);
       }
-    } catch (error) {
-      const apiError = error as ApiError;
-      
-      if (apiError.status === 422 && apiError.data?.errors) {
-        const serverErrors: { email?: string; password?: string } = {};
-        
-        if (apiError.data.errors.email) {
-          serverErrors.email = apiError.data.errors.email[0];
-        }
-        if (apiError.data.errors.password) {
-          serverErrors.password = apiError.data.errors.password[0];
-        }
-        
-        setErrors(serverErrors);
-      } else {
-        Alert.alert('Erro', apiError.message || 'Erro ao fazer login');
-      }
+    } catch (error: any) {
+      Alert.alert('Erro', error.message || 'Erro ao fazer login');
     } finally {
       setLoading(false);
     }
@@ -93,76 +54,59 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardAvoidingView}
-      >
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
-          <View style={styles.formContainer}>
-            <Text style={styles.title}>Entrar</Text>
-            <Text style={styles.subtitle}>Faça login para continuar</Text>
+      <View style={styles.formContainer}>
+        <Text style={styles.title}>Entrar</Text>
+        <Text style={styles.subtitle}>Faça login para continuar</Text>
 
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Email</Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  errors.email ? styles.inputError : null,
-                ]}
-                placeholder="Digite seu email"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-                editable={!loading}
-              />
-              {errors.email && (
-                <Text style={styles.errorText}>{errors.email}</Text>
-              )}
-            </View>
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Email</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Digite seu email"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+            editable={!loading}
+          />
+        </View>
 
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Senha</Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  errors.password ? styles.inputError : null,
-                ]}
-                placeholder="Digite sua senha"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                autoCapitalize="none"
-                autoCorrect={false}
-                editable={!loading}
-              />
-              {errors.password && (
-                <Text style={styles.errorText}>{errors.password}</Text>
-              )}
-            </View>
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Senha</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Digite sua senha"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            autoCapitalize="none"
+            autoCorrect={false}
+            editable={!loading}
+          />
+        </View>
 
-            <TouchableOpacity
-              style={[
-                styles.loginButton,
-                loading ? styles.loginButtonDisabled : null,
-              ]}
-              onPress={handleLogin}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#FFFFFF" />
-              ) : (
-                <Text style={styles.loginButtonText}>Entrar</Text>
-              )}
+        <TouchableOpacity
+          style={[styles.loginButton, loading && styles.loginButtonDisabled]}
+          onPress={handleLogin}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <Text style={styles.loginButtonText}>Entrar</Text>
+          )}
+        </TouchableOpacity>
+
+        <View style={styles.signUpContainer}>
+          <Text style={styles.signUpText}>Não tem uma conta?</Text>
+          <Link href="/signUp" asChild>
+            <TouchableOpacity>
+              <Text style={styles.signUpLink}>Cadastre-se aqui</Text>
             </TouchableOpacity>
-
-            <TouchableOpacity style={styles.forgotPasswordContainer}>
-              <Text style={styles.forgotPasswordText}>Esqueci minha senha</Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+          </Link>
+        </View>
+      </View>
     </SafeAreaView>
   );
 };
@@ -171,12 +115,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F5F5F5',
-  },
-  keyboardAvoidingView: {
-    flex: 1,
-  },
-  scrollContainer: {
-    flexGrow: 1,
     justifyContent: 'center',
     padding: 20,
   },
@@ -223,14 +161,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: '#FAFAFA',
   },
-  inputError: {
-    borderColor: '#FF6B6B',
-  },
-  errorText: {
-    color: '#FF6B6B',
-    fontSize: 14,
-    marginTop: 5,
-  },
   loginButton: {
     backgroundColor: '#007AFF',
     borderRadius: 8,
@@ -246,13 +176,17 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
   },
-  forgotPasswordContainer: {
+  signUpContainer: {
+    marginTop: 24,
     alignItems: 'center',
-    marginTop: 20,
   },
-  forgotPasswordText: {
+  signUpText: {
+    color: '#666',
+    marginBottom: 4,
+  },
+  signUpLink: {
     color: '#007AFF',
-    fontSize: 16,
+    fontWeight: '600',
   },
 });
 

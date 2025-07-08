@@ -1,9 +1,21 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
+import AuthService from '@/services/authService'; // Importar o serviço de autenticação
 
 const SettingsScreen = () => {
+
+  const handleLogout = async () => {
+    try {
+      await AuthService.logout();
+      Alert.alert('Sucesso', 'Logout realizado com sucesso!');
+      router.replace('/login'); // Redirecionar para a tela de login após o logout
+    } catch (error: any) {
+      Alert.alert('Erro', error.message || 'Erro ao fazer logout.');
+    }
+  };
+
   return (
     <ScrollView 
       style={styles.container}
@@ -70,7 +82,7 @@ const SettingsScreen = () => {
       </View>
 
       {/* Botão de Logout */}
-      <TouchableOpacity style={styles.logoutButton}>
+      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Text style={styles.logoutText}>Logout</Text>
       </TouchableOpacity>
 

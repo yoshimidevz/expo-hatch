@@ -5,8 +5,8 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useAuth } from '@/contexts/authContext';
 import LoginScreen from '@/app/login';
-import HomeScreen from '@/app/screens/index';
-import ProfileScreen from '@/app/screens/settings';
+import HomeScreen from '@/app/(tabs)/index';
+import ProfileScreen from '@/app/(tabs)/settings';
 
 const Tab = createBottomTabNavigator();
 
