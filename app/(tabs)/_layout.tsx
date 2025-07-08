@@ -4,6 +4,7 @@ import { Platform, View } from 'react-native';
 
 import { HapticTab } from '@/components/HapticTab';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import Entypo from '@expo/vector-icons/Entypo';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { IconSymbol } from '@/components/ui/IconSymbol';
@@ -60,10 +61,10 @@ export default function TabLayout() {
         tabBarItemStyle: {
           ...Platform.select({
             ios: {
-              paddingBottom: 4,
+              paddingBottom: 5,
             },
             android: {
-              paddingBottom: 0,
+              paddingBottom: 5,
             },
           }),
         },
@@ -106,6 +107,19 @@ export default function TabLayout() {
           ),
         }}
       />
+        <Tabs.Screen
+          name="status"
+          options={{
+            title: 'Status',
+            tabBarIcon: ({ color, focused }) => (
+              <TabIconWithIndicator
+                focused={focused}
+                size={24}
+                icon={<MaterialIcons name="portable-wifi-off" size={24} color={color} />}
+              />
+            ),
+          }}
+        />
       <Tabs.Screen
         name="settings"
         options={{
@@ -120,5 +134,6 @@ export default function TabLayout() {
         }}
       />
     </Tabs>
+    
   );
 }
