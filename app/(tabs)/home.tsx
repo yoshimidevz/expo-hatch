@@ -1,5 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, ScrollView, Platform, Image, ActivityIndicator, Alert } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { 
+  View, 
+  Text, 
+  FlatList, 
+  TouchableOpacity, 
+  ScrollView, 
+  Platform, 
+  Image, 
+  ActivityIndicator, 
+  Alert,
+  RefreshControl 
+} from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { Link } from 'expo-router';
@@ -11,23 +22,56 @@ const App = () => {
   const [connection, setConnection] = useState('CONECTADO');
   const [alerts, setAlerts] = useState<Alerta[]>([]);
   const [loadingAlerts, setLoadingAlerts] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [apiConnected, setApiConnected] = useState(true);
+
+  // Função para buscar alertas
+  const fetchAlerts = useCallback(async () => {
+    try {
+      setLoadingAlerts(true);
+      
+      // Verificar conectividade com a API
+      const isConnected = await AlertService.checkConnection();
+      setApiConnected(isConnected);
+      
+      if (!isConnected) {
+        throw new Error('API não está acessível. Verifique sua conexão.');
+      }
+
+      const fetchedAlerts = await AlertService.getAlerts();
+      setAlerts(fetchedAlerts.slice(0, 4)); // Pegando apenas os 4 mais recentes
+    } catch (error: any) {
+      console.error('Erro ao carregar alertas:', error);
+      Alert.alert(
+        'Erro ao carregar alertas', 
+        error.message || 'Não foi possível carregar os alertas.',
+        [
+          { text: 'OK' },
+          { text: 'Tentar novamente', onPress: fetchAlerts }
+        ]
+      );
+      setAlerts([]);
+      setApiConnected(false);
+    } finally {
+      setLoadingAlerts(false);
+    }
+  }, []);
+
+  // Função para refresh
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchAlerts();
+    setRefreshing(false);
+  }, [fetchAlerts]);
 
   useEffect(() => {
-    const fetchAlerts = async () => {
-      try {
-        setLoadingAlerts(true);
-        const fetchedAlerts = await AlertService.getAlerts();
-        setAlerts(fetchedAlerts.slice(0, 4)); // Pegando apenas os 4 mais recentes
-      } catch (error: any) {
-        Alert.alert('Erro', error.message || 'Não foi possível carregar os alertas.');
-        setAlerts([]);
-      } finally {
-        setLoadingAlerts(false);
-      }
-    };
-
     fetchAlerts();
-  }, []);
+    
+    // Configurar intervalo para atualizar alertas a cada 30 segundos
+    const interval = setInterval(fetchAlerts, 30000);
+    
+    return () => clearInterval(interval);
+  }, [fetchAlerts]);
 
   const toggleStatus = () => {
     setStatus(prevStatus => (prevStatus === 'ABERTO' ? 'FECHADO' : 'ABERTO')); 
@@ -37,6 +81,49 @@ const App = () => {
     setConnection(prevConn => (prevConn === 'CONECTADO' ? 'SEM CONEXÃO' : 'CONECTADO'));
   };
 
+  // Função para formatar data
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      return {
+        date: date.toLocaleDateString('pt-BR'),
+        time: date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+      };
+    } catch (error) {
+      return { date: 'Data inválida', time: '' };
+    }
+  };
+
+  // Função para determinar o ícone do alerta
+  const getAlertIcon = (message: string, type?: string) => {
+    if (message.toLowerCase().includes('abriu') || message.toLowerCase().includes('aberto')) {
+      return <Feather name="unlock" size={16} color="green" />;
+    } else if (message.toLowerCase().includes('fechou') || message.toLowerCase().includes('fechado')) {
+      return <Feather name="lock" size={16} color="red" />;
+    } else if (type === 'warning') {
+      return <Feather name="alert-triangle" size={16} color="orange" />;
+    } else if (type === 'error') {
+      return <Feather name="alert-circle" size={16} color="red" />;
+    } else {
+      return <Feather name="info" size={16} color="blue" />;
+    }
+  };
+
+  // Função para determinar a cor de fundo do alerta
+  const getAlertBackgroundColor = (message: string, type?: string) => {
+    if (message.toLowerCase().includes('fechou') || message.toLowerCase().includes('fechado')) {
+      return '#FFEBEE';
+    } else if (message.toLowerCase().includes('abriu') || message.toLowerCase().includes('aberto')) {
+      return '#E8F5E8';
+    } else if (type === 'warning') {
+      return '#FFF3E0';
+    } else if (type === 'error') {
+      return '#FFEBEE';
+    } else {
+      return '#FFFFFF';
+    }
+  };
+
   return (
     <ScrollView 
       style={{ flex: 1, backgroundColor: '#F5F5F5' }}
@@ -44,6 +131,9 @@ const App = () => {
         padding: 20,
         paddingBottom: Platform.select({ ios: 100, android: 80 }),
       }}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
     >
       <View style={{
         marginBottom: 20,
@@ -83,7 +173,7 @@ const App = () => {
                   width: 15,
                   height: 15,
                   borderRadius: 7.5,
-                  backgroundColor: '#2ecc71',
+                  backgroundColor: apiConnected ? '#2ecc71' : '#e74c3c',
                   borderWidth: 2,
                   borderColor: 'white',
                 }} />
@@ -140,6 +230,25 @@ const App = () => {
                 {connection}
               </Text>
             </TouchableOpacity>
+
+            {/* Indicador de status da API */}
+            <View style={{ marginBottom: 10 }}>
+              <Text style={{
+                fontSize: 20,
+                marginBottom: 5,
+                flexDirection: 'row',
+                alignItems: 'center',
+              }}>
+                <Feather name="server" size={16} color="black" /> API
+              </Text>
+              <Text style={{
+                fontSize: 20,
+                fontWeight: 'bold',
+                color: apiConnected ? 'green' : 'red'
+              }}>
+                {apiConnected ? 'CONECTADA' : 'DESCONECTADA'}
+              </Text>
+            </View>
           </View>
           
           <TouchableOpacity 
@@ -179,6 +288,11 @@ const App = () => {
         backgroundColor: 'white',
         borderRadius: 12,
         padding: 16,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
       }}>
         <View style={{
           flexDirection: 'row',
@@ -190,58 +304,91 @@ const App = () => {
             fontSize: 18,
             fontWeight: 'bold',
           }}>Últimos Alertas</Text>
-          <Link href="/statistic" asChild>
-            <TouchableOpacity>
-              <Text style={{
-                fontSize: 14,
-                color: '#3498db',
-              }}>Ver todos</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <TouchableOpacity onPress={fetchAlerts} style={{ marginRight: 10 }}>
+              <Feather name="refresh-cw" size={16} color="#3498db" />
             </TouchableOpacity>
-          </Link>
+            <Link href="/statistic" asChild>
+              <TouchableOpacity>
+                <Text style={{
+                  fontSize: 14,
+                  color: '#3498db',
+                }}>Ver todos</Text>
+              </TouchableOpacity>
+            </Link>
+          </View>
         </View>
         
         {loadingAlerts ? (
-          <ActivityIndicator size="large" color="#007AFF" />
+          <View style={{ padding: 20, alignItems: 'center' }}>
+            <ActivityIndicator size="large" color="#3498db" />
+            <Text style={{ marginTop: 10, color: '#666' }}>Carregando alertas...</Text>
+          </View>
+        ) : !apiConnected ? (
+          <View style={{ padding: 20, alignItems: 'center' }}>
+            <Feather name="wifi-off" size={24} color="#e74c3c" />
+            <Text style={{ marginTop: 10, color: '#e74c3c', textAlign: 'center' }}>
+              Sem conexão com a API
+            </Text>
+            <TouchableOpacity onPress={fetchAlerts} style={{ marginTop: 10 }}>
+              <Text style={{ color: '#3498db' }}>Tentar novamente</Text>
+            </TouchableOpacity>
+          </View>
         ) : alerts.length > 0 ? (
           <FlatList
             data={alerts}
             scrollEnabled={false}
             keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <View style={{
-                flexDirection: 'row',
-                padding: 12,
-                borderRadius: 8,
-                marginVertical: 4,
-                backgroundColor: item.message.includes('FECHOU') ? '#FFEBEE' : '#FFFFFF',
-              }}>
+            renderItem={({ item }) => {
+              const { date, time } = formatDate(item.created_at);
+              return (
                 <View style={{
-                  marginRight: 12,
-                  justifyContent: 'center',
+                  flexDirection: 'row',
+                  padding: 12,
+                  borderRadius: 8,
+                  marginVertical: 4,
+                  backgroundColor: getAlertBackgroundColor(item.message, item.type),
+                  borderLeftWidth: 3,
+                  borderLeftColor: item.message.toLowerCase().includes('fechou') ? '#e74c3c' : 
+                                  item.message.toLowerCase().includes('abriu') ? '#2ecc71' : '#3498db',
                 }}>
-                  {item.message.includes('ABRIU') ? (
-                    <Feather name="unlock" size={16} color="green" />
-                  ) : (
-                    <Feather name="lock" size={16} color="red" />
-                  )}
+                  <View style={{
+                    marginRight: 12,
+                    justifyContent: 'center',
+                  }}>
+                    {getAlertIcon(item.message, item.type)}
+                  </View>
+                  <View style={{
+                    flex: 1,
+                  }}>
+                    <Text style={{
+                      fontSize: 16,
+                      marginBottom: 4,
+                      fontWeight: '500',
+                    }}>{item.message}</Text>
+                    <Text style={{
+                      fontSize: 14,
+                      color: '#888',
+                    }}>{date} • {time}</Text>
+                    {item.sensor_data?.escotilha?.name && (
+                      <Text style={{
+                        fontSize: 12,
+                        color: '#666',
+                        marginTop: 2,
+                      }}>Escotilha: {item.sensor_data.escotilha.name}</Text>
+                    )}
+                  </View>
                 </View>
-                <View style={{
-                  flex: 1,
-                }}>
-                  <Text style={{
-                    fontSize: 16,
-                    marginBottom: 4,
-                  }}>{item.message}</Text>
-                  <Text style={{
-                    fontSize: 14,
-                    color: '#888',
-                  }}>{new Date(item.created_at).toLocaleDateString()} • {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
-                </View>
-              </View>
-            )}
+              );
+            }}
           />
         ) : (
-          <Text style={{ textAlign: 'center', color: '#888' }}>Nenhum alerta encontrado.</Text>
+          <View style={{ padding: 20, alignItems: 'center' }}>
+            <Feather name="bell-off" size={24} color="#888" />
+            <Text style={{ marginTop: 10, textAlign: 'center', color: '#888' }}>
+              Nenhum alerta encontrado.
+            </Text>
+          </View>
         )}
       </View>
 

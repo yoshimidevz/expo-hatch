@@ -7,7 +7,7 @@ import {
   obterDadosUsuario,
 } from '../utils/storage';
 
-const API_BASE_URL = 'http://10.20.17.105:8000/api';
+const API_BASE_URL = 'http://192.168.0.162:8000/api'; //pro coworking eu uso 10.20.17.105:8000/api e em casa 192.168.0.162:8000/api
 
 export interface LoginCredentials {
   email: string;
