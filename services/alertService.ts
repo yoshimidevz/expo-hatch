@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { obterToken } from '@/utils/storage';
 
-const API_BASE_URL = 'https://yoshimi-vazadas.tecnomaub.site/api/register'; 
+const API_BASE_URL = 'https://yoshimi-vazadas.tecnomaub.site/api/'; 
 
 const api = axios.create({
   baseURL: API_BASE_URL,
