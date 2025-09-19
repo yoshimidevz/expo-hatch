@@ -7,7 +7,7 @@ import {
   obterDadosUsuario,
 } from '../utils/storage';
 
-const API_BASE_URL = 'https://yoshimi-vazadas.tecnomaub.site/'; //pro coworking eu uso 10.20.17.105:8000/api e em casa 192.168.0.162:8000/api e no visitante 10.20.14.109
+const API_BASE_URL = 'https://yoshimi-vazadas.tecnomaub.site/api/register'; //pro coworking eu uso 10.20.17.105:8000/api e em casa 192.168.0.162:8000/api e no visitante 10.20.14.109
 
 export interface LoginCredentials {
   email: string;
