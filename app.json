@@ -16,7 +16,8 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.yoshimiii.expohatch"
     },
     "web": {
       "bundler": "metro",
@@ -37,6 +38,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "cdeb6a07-98e1-409a-b7ab-d666366a3dc5"
+      }
     }
   }
 }
