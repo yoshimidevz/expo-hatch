@@ -16,6 +16,7 @@ import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { Link } from 'expo-router';
 import Entypo from '@expo/vector-icons/Entypo';
 import AlertService, { Alerta } from '@/services/alertService';
+import { togglePistao } from '@/services/alertService';
 
 const App = () => {
   const [status, setStatus] = useState('ABERTO');
@@ -73,8 +74,16 @@ const App = () => {
     return () => clearInterval(interval);
   }, [fetchAlerts]);
 
-  const toggleStatus = () => {
-    setStatus(prevStatus => (prevStatus === 'ABERTO' ? 'FECHADO' : 'ABERTO')); 
+  const handleTogglePistao = async () => {
+    const action = status === 'ABERTO' ? 'fechar' : 'abrir';
+    try {
+      await togglePistao(action);
+      
+      setStatus(prev => (prev === 'ABERTO' ? 'FECHADO' : 'ABERTO'));
+      Alert.alert('Sucesso', `Comando ${action} enviado!`);
+    } catch (error: any) {
+      Alert.alert('Erro', error.message || 'Não foi possível enviar o comando.');
+    }
   };
 
   const toggleConnection = () => {
@@ -266,7 +275,7 @@ const App = () => {
               shadowColor: status === 'ABERTO' ? '#3498db' : '#e74c3c',
               elevation: 10,
             }} 
-            onPress={toggleStatus}
+            onPress={handleTogglePistao}
           >
             <Feather 
               name={status === 'ABERTO' ? 'unlock' : 'lock'} 

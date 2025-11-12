@@ -13,7 +13,7 @@ export default function ConnectionScreen() {
       {/* Círculo para a foto */}
       <View style={styles.circle}>
         <Image 
-          source={require('@/assets/images/escotilha-logo.png')}
+          source={require('@/assets/images/logo.jpg')}
           style={styles.image}
         />
       </View>

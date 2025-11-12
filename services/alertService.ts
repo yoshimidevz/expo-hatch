@@ -1,6 +1,19 @@
+import apiService from './apiServices';
+
+
 import axios from 'axios';
 import { obterToken } from '@/utils/storage';
 
+export const togglePistao = async (action: 'abrir' | 'fechar') => {
+  try {
+    const serial_number = 'ESP32-PORTA01'; 
+    const response = await apiService.post('escotilha/comporta', { serial_number, action });
+    return response.data;
+  } catch (error: any) {
+    console.error('Erro ao enviar comando para pistão:', error.response?.data || error.message);
+    throw error;
+  }
+};
 const API_BASE_URL = 'https://yoshimi-vazadas.tecnomaub.site/api/'; 
 
 const api = axios.create({
@@ -12,7 +25,6 @@ const api = axios.create({
   timeout: 10000,
 });
 
-// Interceptor para adicionar o token de autenticação a cada requisição
 api.interceptors.request.use(
   async (config) => {
     const token = await obterToken();
@@ -26,12 +38,10 @@ api.interceptors.request.use(
   }
 );
 
-// Interceptor para tratamento de respostas
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Token expirado ou inválido
       console.error('Token de autenticação inválido ou expirado');
     } else if (error.response?.status === 403) {
       console.error('Acesso negado');
