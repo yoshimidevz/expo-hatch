@@ -1,7 +1,7 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const BASE_URL = 'https://yoshimi-vazadas.tecnomaub.site/api/';
+const BASE_URL = 'http://192.168.18.162:8001/api/';
 
 const api = axios.create({
   baseURL: BASE_URL,
@@ -32,17 +32,14 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Retry uma vez em caso de erro de rede
     if (error.code === 'NETWORK_ERROR' && !originalRequest._retry) {
       originalRequest._retry = true;
       await new Promise((resolve) => setTimeout(resolve, 1000));
       return api(originalRequest);
     }
 
-    // Se erro 401, limpa token
     if (error.response?.status === 401) {
       await AsyncStorage.removeItem('auth_token');
-      // Aqui você pode disparar uma ação para atualizar o estado de autenticação, se quiser
     }
 
     return Promise.reject({

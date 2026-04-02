@@ -14,7 +14,7 @@ export const togglePistao = async (action: 'abrir' | 'fechar') => {
     throw error;
   }
 };
-const API_BASE_URL = 'https://yoshimi-vazadas.tecnomaub.site/api/'; 
+const API_BASE_URL = 'http://192.168.18.162:8001/api/'; //pro coworking eu uso 10.20.17.105:8000/api e em casa 192.168.0.162:8000/api e no visitante 10.20.14.109
 
 const api = axios.create({
   baseURL: API_BASE_URL,
