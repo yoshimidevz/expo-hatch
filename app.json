@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "expo-hatch",
+    "name": "Escotilha Inteligente",
     "slug": "expo-hatch",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -13,9 +13,9 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      },
+      "foregroundImage": "./assets/images/adaptive-icon.png",
+      "backgroundColor": "#001020"
+    },
       "edgeToEdgeEnabled": true,
       "package": "com.yoshimiii.expohatch"
     },
@@ -29,10 +29,10 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/logo.jpg",
+          "image": "./assets/images/splash.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "backgroundColor": "#001020"
         }
       ]
     ],
